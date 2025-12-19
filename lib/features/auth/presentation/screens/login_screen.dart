@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_constants.dart';
 
@@ -100,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // Sign up
               TextButton(
                 onPressed: () {
-
+                  context.go('/signup');
                 },
                 child: Text(
                   'Ei ole kontot? Registreeru',

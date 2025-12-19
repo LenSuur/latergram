@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:latergram/core/router/app_router.dart';
 import 'package:latergram/core/theme/app_theme.dart';
-import 'package:latergram/features/auth/presentation/screens/login_screen.dart';
 import 'core/constants/app_constants.dart';
 
 void main() {
@@ -12,11 +12,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const LoginScreen(),
+      routerConfig: AppRouter.router,
     );
   }
 }
