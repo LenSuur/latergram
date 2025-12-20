@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latergram/core/utils/validators.dart';
+import 'package:latergram/shared/services/auth_service.dart';
 
 import '../../../../core/constants/app_constants.dart';
 
@@ -15,6 +16,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final AuthService _authService = AuthService();
+
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -23,11 +27,40 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
-    if (_formKey.currentState!.validate()) {
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Sign in with Firebase
+      await _authService.signInWithEmail(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
       print('Login successful!');
-      print('Email: ${_emailController.text}');
-      print('Password: ${_passwordController.text}');
+
+      // TODO: Navigate to home screen (we'll create this later)
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Tere tulemast tagasi!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -66,6 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
+                    enabled: !_isLoading,
                     decoration: InputDecoration(
                       labelText: 'Email',
                       hintText: 'Sisesta oma email',
@@ -81,6 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: true,
+                    enabled: !_isLoading,
                     decoration: InputDecoration(
                       labelText: 'Parool',
                       hintText: 'Sisesta oma parool',
@@ -94,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Login button
                   ElevatedButton(
-                    onPressed: _handleLogin,
+                    onPressed: _isLoading ? null : _handleLogin,
                     child: const Text(
                       'Logi sisse',
                       style: TextStyle(
@@ -108,9 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Sign up
                   TextButton(
-                    onPressed: () {
-                      context.go('/signup');
-                    },
+                    onPressed: _isLoading ? null : () => context.go('/signup'),
                     child: Text(
                       'Ei ole kontot? Registreeru',
                       style: TextStyle(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latergram/shared/services/auth_service.dart';
 
 import '../../../../core/utils/validators.dart';
 
@@ -17,6 +18,9 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final AuthService _authService = AuthService();
+
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -27,16 +31,45 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  void _handleSignup() {
-    if (_formKey.currentState!.validate()) {
+  void _handleSignup() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Create account with Firebase
+      await _authService.signUpWithEmail(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
       print('Signup successful!');
       print('Name: ${_nameController.text}');
-      print('Email: ${_emailController.text}');
-      print('Password: ${_passwordController.text}');
 
-      // TODO: Add Firebase signup later
+      if (mounted) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Konto loodud! Palun logi sisse.'),
+            backgroundColor: Colors.green,
+          ),
+        );
 
-      context.go('/login');
+        // Navigate to login
+        await Future.delayed(Duration(seconds: 1));
+        context.go('/login');
+      }
+    } catch (e) {
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -89,6 +122,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   TextFormField(
                     controller: _nameController,
                     style: TextStyle(color: Colors.white),
+                    enabled: !_isLoading,
                     decoration: InputDecoration(
                       labelText: 'Nimi',
                       hintText: 'Sisesta oma nimi',
@@ -106,6 +140,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
+                    enabled: !_isLoading,
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       labelText: 'Email',
@@ -124,6 +159,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: true,
+                    enabled: !_isLoading,
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       labelText: 'Parool',
@@ -142,6 +178,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   TextFormField(
                     controller: _confirmPasswordController,
                     obscureText: true,
+                    enabled: !_isLoading,
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       labelText: 'Kinnita parool',
@@ -161,14 +198,25 @@ class _SignupScreenState extends State<SignupScreen> {
 
                   // Signup button
                   ElevatedButton(
-                    onPressed: _handleSignup,
-                    child: const Text(
-                      'Registreeru',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    onPressed: _isLoading ? null : _handleSignup,
+                    child: _isLoading
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Text(
+                            'Registreeru',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
 
                   const SizedBox(height: 16),
