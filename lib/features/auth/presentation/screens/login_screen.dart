@@ -41,14 +41,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       print('Login successful!');
 
-      // TODO: Navigate to home screen (we'll create this later)
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Tere tulemast tagasi!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        context.go('/home');
       }
     } catch (e) {
       // Show error message

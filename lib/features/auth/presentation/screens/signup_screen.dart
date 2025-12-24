@@ -41,6 +41,7 @@ class _SignupScreenState extends State<SignupScreen> {
       await _authService.signUpWithEmail(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        name: _nameController.text.trim(),
       );
 
       print('Signup successful!');

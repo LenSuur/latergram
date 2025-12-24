@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latergram/shared/services/auth_service.dart';
 
 import '../../../../core/constants/app_constants.dart';
 
@@ -11,18 +12,26 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final AuthService _authService = AuthService();
+  String _version = '';
 
   @override
   void initState() {
     super.initState();
-    _navigateToLogin();
+    _navigateToNextScreen();
   }
 
-  Future<void> _navigateToLogin() async {
+  Future<void> _navigateToNextScreen() async {
     await Future.delayed(const Duration(milliseconds: 3500));
 
     if (mounted) {
-      context.go('/login');
+      final user = _authService.currentUser;
+
+      if (user != null) {
+        context.go('/home');
+      } else {
+        context.go('/login');
+      }
     }
   }
 
@@ -32,7 +41,6 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.black,
       body: Column(
         children: [
-
           const Spacer(),
 
           Center(
@@ -49,10 +57,7 @@ class _SplashScreenState extends State<SplashScreen> {
             padding: const EdgeInsets.only(bottom: 32.0),
             child: Text(
               'v${AppConstants.appVersion}',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ),
         ],
