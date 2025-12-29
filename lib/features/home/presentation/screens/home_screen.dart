@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:latergram/shared/services/auth_service.dart';
 import 'package:latergram/shared/services/reflection_service.dart';
 
+import '../../../../core/utils/date_helper.dart';
 import '../../../reflection/data/models/reflection_model.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -27,14 +28,32 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadReflections() async {
-    print('Loading reflections...');
+    final user = _authService.currentUser;
+    if (user == null) return;
 
-    // Simulate loading for now
-    await Future.delayed(Duration(seconds: 1));
+    try {
+      // Get current year's reflection
+      final currentYear = DateHelper.currentYear();
+      final currentReflection = await _reflectionService
+          .getUserReflectionForYear(user.uid, currentYear);
 
-    setState(() {
-      _isLoading = false;
-    });
+      setState(() {
+        _currentYearReflection = currentReflection;
+        _isLoading = false;
+      });
+
+      // Listen to past reflections (Stream - real-time updates)
+      _reflectionService.getUserReflections(user.uid).listen((reflections) {
+        setState(() {
+          _pastReflections = reflections
+              .where((r) => r.year < DateHelper.currentYear())
+              .toList();
+        });
+      });
+    } catch (e) {
+      print('Error loading reflections: $e');
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
