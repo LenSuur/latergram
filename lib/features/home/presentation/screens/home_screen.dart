@@ -13,7 +13,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   final AuthService _authService = AuthService();
   final ReflectionService _reflectionService = ReflectionService();
 
@@ -56,13 +55,179 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Widget _buildCurrentYearCard() {
+    final currentYear = DateHelper.currentYear();
+
+    return Card(
+      color: Colors.grey[900],
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Year badge
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  'Aasta $currentYear',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 16),
+
+            // Photo or placeholder
+            Container(
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.grey[800],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.add_photo_alternate,
+                  size: 64,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+
+            SizedBox(height: 16),
+
+            // Placeholder text
+            Text(
+              'Lisa oma foto ja mõtted...',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+
+            SizedBox(height: 16),
+
+            // Open button
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  print('Open button pressed');
+                  // TODO: Navigate to create screen
+                },
+                child: Text('Ava'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPastYearsCard() {
+    return Card(
+      color: Colors.grey[900],
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Varasemad aastad',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Siin kuvatakse sinu varasemad aastad',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: Text('Legendid', style: TextStyle(color: Colors.white)),
+        automaticallyImplyLeading: false,
+        toolbarHeight: 56,
+        flexibleSpace: SafeArea(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              // Home - clickable image
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    print('Home tapped');
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(8),
+                    child: Image.asset(
+                      'assets/images/icon_home.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.error, color: Colors.red),
+                            Text(
+                              'Error loading image',
+                              style: TextStyle(color: Colors.red, fontSize: 10),
+                            ),
+                          ],
+                        );
+                      },
+                    )
+                  ),
+                ),
+              ),
+
+              // Gallery - clickable image
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    print('Gallery tapped');
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(8),
+                    child: Image.asset(
+                      'assets/images/icon_gallery.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+
+              // Profile - clickable image
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    print('Profile tapped');
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(8),
+                    child: Image.asset(
+                      'assets/images/icon_profile.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
       body: _isLoading
           ? Center(
@@ -70,12 +235,38 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Theme.of(context).colorScheme.primary,
               ),
             )
-          : Center(
-              child: Text(
-                'Data loaded!',
-                style: TextStyle(color: Colors.white),
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Card 1: Current Year
+                  _buildCurrentYearCard(),
+
+                  SizedBox(height: 16),
+
+                  // Card 2: Past Years
+                  _buildPastYearsCard(),
+                ],
               ),
             ),
+      floatingActionButton: DateHelper.isDecember()
+          ? GestureDetector(
+        onTap: () {
+          print('Camera tapped');
+          // TODO: Navigate to create reflection
+        },
+        child: Container(
+          width: 80,
+          height: 80,
+          child: Image.asset(
+            'assets/images/icon_camera.png',
+            fit: BoxFit.contain,
+          ),
+        ),
+      )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
