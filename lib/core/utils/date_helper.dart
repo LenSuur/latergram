@@ -1,6 +1,7 @@
 class DateHelper {
   static bool isDecember() {
-    return DateTime.now().month == 12;
+    return true;
+    // return DateTime.now().month == 12;
   }
 
   static int currentYear() {

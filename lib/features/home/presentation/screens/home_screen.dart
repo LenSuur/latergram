@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:latergram/shared/services/auth_service.dart';
 import 'package:latergram/shared/services/reflection_service.dart';
 
@@ -23,6 +24,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    print('========================================');
+    print('YOUR USER ID: ${_authService.currentUser?.uid}');
+    print('========================================');
     _loadReflections();
   }
 
@@ -111,12 +115,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
             SizedBox(height: 16),
 
-            // Open button
+            // Open button - NOW NAVIGATES
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  print('Open button pressed');
-                  // TODO: Navigate to create screen
+                  context.go('/create-reflection');
                 },
                 child: Text('Ava'),
               ),
@@ -128,6 +131,35 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPastYearsCard() {
+    // If no past reflections, show empty state
+    if (_pastReflections.isEmpty) {
+      return Card(
+        color: Colors.grey[900],
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Varasemad aastad',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Siin kuvatakse sinu varasemad aastad',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Show list of past years with accordion
     return Card(
       color: Colors.grey[900],
       child: Padding(
@@ -144,10 +176,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             SizedBox(height: 16),
-            Text(
-              'Siin kuvatakse sinu varasemad aastad',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
+
+            // List of past years
+            ..._pastReflections.map((reflection) =>
+                _PastYearItem(reflection: reflection)
+            ).toList(),
           ],
         ),
       ),
@@ -170,35 +203,23 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    print('Home tapped');
+                    // Already on home
                   },
                   child: Container(
                     padding: EdgeInsets.all(8),
                     child: Image.asset(
                       'assets/images/icon_home.png',
                       fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.error, color: Colors.red),
-                            Text(
-                              'Error loading image',
-                              style: TextStyle(color: Colors.red, fontSize: 10),
-                            ),
-                          ],
-                        );
-                      },
-                    )
+                    ),
                   ),
                 ),
               ),
 
-              // Gallery - clickable image
+              // Gallery - clickable image WITH NAVIGATION
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    print('Gallery tapped');
+                    context.go('/gallery');
                   },
                   child: Container(
                     padding: EdgeInsets.all(8),
@@ -210,11 +231,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // Profile - clickable image
+              // Profile - clickable image WITH NAVIGATION
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    print('Profile tapped');
+                    context.go('/profile');
                   },
                   child: Container(
                     padding: EdgeInsets.all(8),
@@ -231,30 +252,29 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: _isLoading
           ? Center(
-              child: CircularProgressIndicator(
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            )
+        child: CircularProgressIndicator(
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      )
           : SingleChildScrollView(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Card 1: Current Year
-                  _buildCurrentYearCard(),
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Card 1: Current Year
+            _buildCurrentYearCard(),
 
-                  SizedBox(height: 16),
+            SizedBox(height: 16),
 
-                  // Card 2: Past Years
-                  _buildPastYearsCard(),
-                ],
-              ),
-            ),
+            // Card 2: Past Years
+            _buildPastYearsCard(),
+          ],
+        ),
+      ),
       floatingActionButton: DateHelper.isDecember()
           ? GestureDetector(
         onTap: () {
-          print('Camera tapped');
-          // TODO: Navigate to create reflection
+          context.go('/create-reflection');
         },
         child: Container(
           width: 80,
@@ -267,6 +287,70 @@ class _HomeScreenState extends State<HomeScreen> {
       )
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+}
+
+// Accordion item for past years
+class _PastYearItem extends StatefulWidget {
+  final ReflectionModel reflection;
+
+  const _PastYearItem({required this.reflection});
+
+  @override
+  State<_PastYearItem> createState() => _PastYearItemState();
+}
+
+class _PastYearItemState extends State<_PastYearItem> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            'Aasta ${widget.reflection.year}',
+            style: TextStyle(color: Colors.white),
+          ),
+          trailing: Icon(
+            _isExpanded ? Icons.expand_less : Icons.expand_more,
+            color: Colors.grey[400],
+          ),
+          onTap: () {
+            setState(() => _isExpanded = !_isExpanded);
+          },
+        ),
+
+        if (_isExpanded)
+          GestureDetector(
+            onTap: () {
+              // TODO: Navigate to detail view
+              print('View reflection: ${widget.reflection.id}');
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                widget.reflection.photoUrl,
+                height: 150,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 150,
+                    color: Colors.grey[800],
+                    child: Center(
+                      child: Icon(Icons.error, color: Colors.grey[600]),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+
+        Divider(color: Colors.grey[800]),
+      ],
     );
   }
 }
