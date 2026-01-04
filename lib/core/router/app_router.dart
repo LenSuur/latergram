@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/reflection/presentation/screens/draft_reflection_screen.dart';
 import '../../features/splash/presentation/screens/splash_screens.dart';
 
 class AppRouter {
@@ -78,28 +79,12 @@ class AppRouter {
       ),
 
       GoRoute(
-        path: '/create-reflection',
-        name: 'create-reflection',
-        builder: (context, state) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: Colors.black,
-            leading: IconButton(
-              icon: Icon(Icons.close, color: Colors.white),
-              onPressed: () => context.go('/home'),
-            ),
-            title: Text(
-              'Create Reflection',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-          body: Center(
-            child: Text(
-              'Create Reflection - Coming Soon',
-              style: TextStyle(color: Colors.white, fontSize: 24),
-            ),
-          ),
-        ),
+        path: '/draft-reflection',
+        name: 'draft-reflection',
+        builder: (context, state) {
+          final photoPath = state.extra as String?;
+          return DraftReflectionScreen(photoPath: photoPath);
+        },
       ),
     ],
   );

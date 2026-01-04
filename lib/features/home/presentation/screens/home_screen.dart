@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:latergram/shared/services/auth_service.dart';
 import 'package:latergram/shared/services/reflection_service.dart';
 
@@ -119,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  context.go('/create-reflection');
+                  context.go('/draft-reflection');
                 },
                 child: Text('Ava'),
               ),
@@ -178,9 +179,9 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(height: 16),
 
             // List of past years
-            ..._pastReflections.map((reflection) =>
-                _PastYearItem(reflection: reflection)
-            ).toList(),
+            ..._pastReflections
+                .map((reflection) => _PastYearItem(reflection: reflection))
+                .toList(),
           ],
         ),
       ),
@@ -252,39 +253,49 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: _isLoading
           ? Center(
-        child: CircularProgressIndicator(
-          color: Theme.of(context).colorScheme.primary,
-        ),
-      )
+              child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            )
           : SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Card 1: Current Year
-            _buildCurrentYearCard(),
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Card 1: Current Year
+                  _buildCurrentYearCard(),
 
-            SizedBox(height: 16),
+                  SizedBox(height: 16),
 
-            // Card 2: Past Years
-            _buildPastYearsCard(),
-          ],
-        ),
-      ),
+                  // Card 2: Past Years
+                  _buildPastYearsCard(),
+                ],
+              ),
+            ),
       floatingActionButton: DateHelper.isDecember()
           ? GestureDetector(
-        onTap: () {
-          context.go('/create-reflection');
-        },
-        child: Container(
-          width: 80,
-          height: 80,
-          child: Image.asset(
-            'assets/images/icon_camera.png',
-            fit: BoxFit.contain,
-          ),
-        ),
-      )
+              onTap: () async {
+                final ImagePicker imagePicker = ImagePicker();
+                final XFile? photo = await imagePicker.pickImage(
+                  source: ImageSource.camera,
+                  maxWidth: 1920,
+                  maxHeight: 1920,
+                  imageQuality: 85,
+                );
+
+                if (photo != null) {
+                  context.push('/draft-reflection', extra: photo.path);
+                }
+              },
+              child: Container(
+                width: 80,
+                height: 80,
+                child: Image.asset(
+                  'assets/images/icon_camera.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            )
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
