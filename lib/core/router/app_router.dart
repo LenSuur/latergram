@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/home/presentation/screens/gallery_screen.dart';
 import '../../features/reflection/presentation/screens/draft_reflection_screen.dart';
 import '../../features/splash/presentation/screens/splash_screens.dart';
 
@@ -37,23 +38,7 @@ class AppRouter {
       GoRoute(
         path: '/gallery',
         name: 'gallery',
-        builder: (context, state) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: Colors.black,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => context.go('/home'),
-            ),
-            title: Text('Gallery', style: TextStyle(color: Colors.white)),
-          ),
-          body: Center(
-            child: Text(
-              'Gallery - Coming Soon',
-              style: TextStyle(color: Colors.white, fontSize: 24),
-            ),
-          ),
-        ),
+        builder: (context, state) => const GalleryScreen(),
       ),
 
       GoRoute(
