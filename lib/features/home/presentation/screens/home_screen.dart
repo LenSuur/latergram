@@ -35,28 +35,33 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = _authService.currentUser;
     if (user == null) return;
 
+    setState(() => _isLoading = false);
+
     try {
-      // Get current year's reflection
-      final currentYear = DateHelper.currentYear();
-      final currentReflection = await _reflectionService
-          .getUserReflectionForYear(user.uid, currentYear);
-
-      setState(() {
-        _currentYearReflection = currentReflection;
-        _isLoading = false;
-      });
-
-      // Listen to past reflections (Stream - real-time updates)
       _reflectionService.getUserReflections(user.uid).listen((reflections) {
+        final currentYear = DateHelper.currentYear();
+
+        ReflectionModel? currentYearReflection;
+        try {
+          currentYearReflection = reflections.firstWhere(
+                (r) => r.year == currentYear,
+          );
+        } catch (e) {
+          currentYearReflection = null;
+        }
+
+        // Filter past year reflections
+        final pastReflections = reflections
+            .where((r) => r.year < currentYear)
+            .toList();
+
         setState(() {
-          _pastReflections = reflections
-              .where((r) => r.year < DateHelper.currentYear())
-              .toList();
+          _currentYearReflection = currentYearReflection;
+          _pastReflections = pastReflections;
         });
       });
     } catch (e) {
       print('Error loading reflections: $e');
-      setState(() => _isLoading = false);
     }
   }
 
@@ -90,39 +95,80 @@ class _HomeScreenState extends State<HomeScreen> {
 
             SizedBox(height: 16),
 
-            // Photo or placeholder
-            Container(
-              height: 200,
-              decoration: BoxDecoration(
-                color: Colors.grey[800],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.add_photo_alternate,
-                  size: 64,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ),
+            _currentYearReflection == null
+                ? Container(
+                    height: 200,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[800],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.add_photo_alternate,
+                        size: 64,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  )
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      _currentYearReflection!.photoUrl,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          height: 200,
+                          color: Colors.grey[800],
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 200,
+                          color: Colors.grey[800],
+                          child: Center(
+                            child: Icon(Icons.error, color: Colors.grey[600]),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
 
             SizedBox(height: 16),
 
-            // Placeholder text
-            Text(
-              'Lisa oma foto ja mõtted...',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
+            _currentYearReflection == null
+                ? Text(
+                    'Lisa oma foto ja mõtted...',
+                    style: TextStyle(color: Colors.grey[600]),
+                  )
+                : Text(
+                    _currentYearReflection!.reflectionText,
+                    style: TextStyle(color: Colors.white),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
 
             SizedBox(height: 16),
 
-            // Open button - NOW NAVIGATES
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  context.go('/draft-reflection');
+                  if (_currentYearReflection != null) {
+                    // Editing existing
+                    context.push('/draft-reflection', extra: _currentYearReflection);
+                  } else {
+                    // Creating new
+                    context.go('/draft-reflection');
+                  }
                 },
-                child: Text('Ava'),
+                child: Text(_currentYearReflection == null ? 'Ava' : 'Muuda'),
               ),
             ),
           ],
@@ -132,7 +178,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPastYearsCard() {
-    // If no past reflections, show empty state
     if (_pastReflections.isEmpty) {
       return Card(
         color: Colors.grey[900],
@@ -160,7 +205,6 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    // Show list of past years with accordion
     return Card(
       color: Colors.grey[900],
       child: Padding(
@@ -337,7 +381,6 @@ class _PastYearItemState extends State<_PastYearItem> {
         if (_isExpanded)
           GestureDetector(
             onTap: () {
-              // TODO: Navigate to detail view
               print('View reflection: ${widget.reflection.id}');
             },
             child: ClipRRect(

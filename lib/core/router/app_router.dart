@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/reflection/data/models/reflection_model.dart';
 import '../../features/reflection/presentation/screens/draft_reflection_screen.dart';
 import '../../features/splash/presentation/screens/splash_screens.dart';
 
@@ -82,8 +83,18 @@ class AppRouter {
         path: '/draft-reflection',
         name: 'draft-reflection',
         builder: (context, state) {
-          final photoPath = state.extra as String?;
-          return DraftReflectionScreen(photoPath: photoPath);
+          final extra = state.extra;
+
+          if (extra is String) {
+            // photo path
+            return DraftReflectionScreen(photoPath: extra);
+          } else if (extra is ReflectionModel) {
+            // reflection
+            return DraftReflectionScreen(existingReflection: extra);
+          } else {
+            // Coming from "Ava" button - no data
+            return DraftReflectionScreen();
+          }
         },
       ),
     ],

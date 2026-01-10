@@ -1,13 +1,24 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
 import '../../../../core/utils/date_helper.dart';
+import '../../../../shared/services/auth_service.dart';
+import '../../../../shared/services/reflection_service.dart';
+import '../../../../shared/services/storage_service.dart';
+import '../../data/models/reflection_model.dart';
 
 class DraftReflectionScreen extends StatefulWidget {
   final String? photoPath; // Photo from home screen camera (optional)
+  final ReflectionModel? existingReflection;
 
-  const DraftReflectionScreen({super.key, this.photoPath});
+  const DraftReflectionScreen({
+    super.key,
+    this.photoPath,
+    this.existingReflection,
+  });
 
   @override
   State<DraftReflectionScreen> createState() => _DraftReflectionScreenState();
@@ -16,9 +27,13 @@ class DraftReflectionScreen extends StatefulWidget {
 class _DraftReflectionScreenState extends State<DraftReflectionScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
+  final AuthService _authService = AuthService();
+  final StorageService _storageService = StorageService();
+  final ReflectionService _reflectionService = ReflectionService();
 
   File? _selectedImage;
   bool _isLoading = false;
+  bool _isEditMode = false;
 
   Future<void> _takePhoto() async {
     try {
@@ -48,8 +63,7 @@ class _DraftReflectionScreenState extends State<DraftReflectionScreen> {
   }
 
   Future<void> _saveReflection() async {
-    // Validation
-    if (_selectedImage == null) {
+    if (_selectedImage == null && widget.existingReflection == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Palun tee foto'),
@@ -72,21 +86,58 @@ class _DraftReflectionScreenState extends State<DraftReflectionScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Upload image to Firebase Storage
-      // TODO: Save reflection to Firestore
+      final user = _authService.currentUser;
+      if (user == null) throw 'Kasutaja ei ole sisse logitud';
 
-      // Simulate upload delay
-      await Future.delayed(Duration(seconds: 2));
+      final currentYear = DateHelper.currentYear();
+
+      print('🚀 Starting upload for user: ${user.uid}, year: $currentYear');
+
+      String photoUrl;
+      if (_selectedImage != null) {
+        // New photo upload
+        photoUrl = await _storageService.uploadReflectionPhoto(
+          photoFile: _selectedImage!,
+          userId: user.uid,
+          year: currentYear,
+        );
+        print('✅ New photo uploaded! URL: $photoUrl');
+      } else if (widget.existingReflection != null) {
+        // Editing - keep existing photo URL
+        photoUrl = widget.existingReflection!.photoUrl;
+        print('📸 Using existing photo URL');
+      } else {
+        throw 'No photo available';
+      }
+
+      // user data from Firestore
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      final userName = userDoc.data()?['name'] ?? 'Unknown';
+
+      final reflection = ReflectionModel(
+        id: widget.existingReflection?.id ?? Uuid().v4(),
+        userId: user.uid,
+        userName: userName,
+        year: currentYear,
+        reflectionText: _messageController.text.trim(),
+        photoUrl: photoUrl,
+        createdAt: DateTime.now(),
+      );
+
+      await _reflectionService.saveReflection(reflection);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Salvestatud! (Firebase upload tuleb järgmisena)'),
+            content: Text('✅ Salvestatud!'),
             backgroundColor: Colors.green,
           ),
         );
 
-        // Go back to home
         await Future.delayed(Duration(seconds: 1));
         context.go('/home');
       }
@@ -110,7 +161,11 @@ class _DraftReflectionScreenState extends State<DraftReflectionScreen> {
   @override
   void initState() {
     super.initState();
-    // If photo was passed from home screen, load it
+
+    if (widget.existingReflection != null) {
+      _messageController.text = widget.existingReflection!.reflectionText;
+      _isEditMode = true;
+    }
     if (widget.photoPath != null) {
       _selectedImage = File(widget.photoPath!);
     }
@@ -174,36 +229,58 @@ class _DraftReflectionScreenState extends State<DraftReflectionScreen> {
                         width: 2,
                       ),
                     ),
-                    child: _selectedImage == null
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.photo_camera_outlined,
-                                  size: 80,
-                                  color: Colors.grey[600],
-                                ),
-                                SizedBox(height: 16),
-                                Text(
-                                  'Foto puudub',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
+                    child: _selectedImage != null
+                        ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(
+                        _selectedImage!,
+                        width: double.infinity,
+                        height: 400,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                        : widget.existingReflection != null
+                        ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        widget.existingReflection!.photoUrl,
+                        width: double.infinity,
+                        height: 400,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            height: 400,
+                            color: Colors.grey[800],
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                             ),
-                          )
-                        : ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.file(
-                              _selectedImage!,
-                              width: double.infinity,
-                              height: 400,
-                              fit: BoxFit.cover,
+                          );
+                        },
+                      ),
+                    )
+                        : Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.photo_camera_outlined,
+                            size: 80,
+                            color: Colors.grey[600],
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Foto puudub',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 16,
                             ),
                           ),
+                        ],
+                      ),
+                    ),
                   ),
 
                   SizedBox(height: 24),
