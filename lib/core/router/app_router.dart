@@ -5,6 +5,7 @@ import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/reflection/data/models/reflection_model.dart';
 import '../../features/reflection/presentation/screens/draft_reflection_screen.dart';
+import '../../features/reflection/presentation/screens/reflection_detail_screen.dart';
 import '../../features/splash/presentation/screens/splash_screens.dart';
 
 class AppRouter {
@@ -97,6 +98,16 @@ class AppRouter {
           }
         },
       ),
+
+      GoRoute(
+        path: '/reflection-detail',
+        name: 'reflection-detail',
+        builder: (context, state) {
+          final reflection = state.extra as ReflectionModel;
+          return ReflectionDetailScreen(reflection: reflection);
+        },
+      ),
+
     ],
   );
 }

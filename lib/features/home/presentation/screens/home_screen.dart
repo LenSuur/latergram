@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ReflectionModel? currentYearReflection;
         try {
           currentYearReflection = reflections.firstWhere(
-                (r) => r.year == currentYear,
+            (r) => r.year == currentYear,
           );
         } catch (e) {
           currentYearReflection = null;
@@ -110,34 +110,42 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   )
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      _currentYearReflection!.photoUrl,
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          height: 200,
-                          color: Colors.grey[800],
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: Theme.of(context).colorScheme.primary,
+                : GestureDetector(
+                    onTap: () {
+                      context.push(
+                        '/reflection-detail',
+                        extra: _currentYearReflection,
+                      );
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        _currentYearReflection!.photoUrl,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            height: 200,
+                            color: Colors.grey[800],
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 200,
-                          color: Colors.grey[800],
-                          child: Center(
-                            child: Icon(Icons.error, color: Colors.grey[600]),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 200,
+                            color: Colors.grey[800],
+                            child: Center(
+                              child: Icon(Icons.error, color: Colors.grey[600]),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
 
@@ -161,10 +169,11 @@ class _HomeScreenState extends State<HomeScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   if (_currentYearReflection != null) {
-                    // Editing existing
-                    context.push('/draft-reflection', extra: _currentYearReflection);
+                    context.push(
+                      '/draft-reflection',
+                      extra: _currentYearReflection,
+                    );
                   } else {
-                    // Creating new
                     context.go('/draft-reflection');
                   }
                 },
@@ -381,7 +390,7 @@ class _PastYearItemState extends State<_PastYearItem> {
         if (_isExpanded)
           GestureDetector(
             onTap: () {
-              print('View reflection: ${widget.reflection.id}');
+              context.push('/reflection-detail', extra: widget.reflection);
             },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
