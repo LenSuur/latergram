@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/models/reflection_model.dart';
+import 'fullscreen_photo.dart';
 
 class ReflectionDetailScreen extends StatelessWidget {
   final ReflectionModel reflection;
@@ -43,8 +44,14 @@ class ReflectionDetailScreen extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: () {
-                // TODO: Open fullscreen view
-                print('Photo tapped - fullscreen coming soon');
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => FullscreenPhoto(
+                      photoUrl: reflection.photoUrl,
+                      heroTag: 'photo_${reflection.id}',
+                    ),
+                  ),
+                );
               },
               child: Hero(
                 tag: 'photo_${reflection.id}',

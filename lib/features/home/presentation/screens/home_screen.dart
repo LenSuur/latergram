@@ -119,32 +119,38 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        _currentYearReflection!.photoUrl,
-                        height: 200,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            height: 200,
-                            color: Colors.grey[800],
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: Theme.of(context).colorScheme.primary,
+                      child: Hero(
+                        tag: 'photo_${_currentYearReflection!.id}',
+                        child: Image.network(
+                          _currentYearReflection!.photoUrl,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              height: 200,
+                              color: Colors.grey[800],
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 200,
-                            color: Colors.grey[800],
-                            child: Center(
-                              child: Icon(Icons.error, color: Colors.grey[600]),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 200,
+                              color: Colors.grey[800],
+                              child: Center(
+                                child: Icon(
+                                  Icons.error,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),
@@ -394,20 +400,23 @@ class _PastYearItemState extends State<_PastYearItem> {
             },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                widget.reflection.photoUrl,
-                height: 150,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 150,
-                    color: Colors.grey[800],
-                    child: Center(
-                      child: Icon(Icons.error, color: Colors.grey[600]),
-                    ),
-                  );
-                },
+              child: Hero(
+                tag: 'photo_${widget.reflection.id}',
+                child: Image.network(
+                  widget.reflection.photoUrl,
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 150,
+                      color: Colors.grey[800],
+                      child: Center(
+                        child: Icon(Icons.error, color: Colors.grey[600]),
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ),
