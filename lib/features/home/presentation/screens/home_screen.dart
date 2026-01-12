@@ -5,6 +5,7 @@ import 'package:latergram/shared/services/auth_service.dart';
 import 'package:latergram/shared/services/reflection_service.dart';
 
 import '../../../../core/utils/date_helper.dart';
+import '../../../../shared/services/cache_service.dart';
 import '../../../../shared/widgets/main_app_bar.dart';
 import '../../../reflection/data/models/reflection_model.dart';
 
@@ -18,6 +19,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final AuthService _authService = AuthService();
   final ReflectionService _reflectionService = ReflectionService();
+  final CacheService _cacheService = CacheService();
 
   ReflectionModel? _currentYearReflection;
   List<ReflectionModel> _pastReflections = [];
@@ -36,33 +38,45 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = _authService.currentUser;
     if (user == null) return;
 
-    setState(() => _isLoading = false);
-
     try {
-      _reflectionService.getUserReflections(user.uid).listen((reflections) {
-        final currentYear = DateHelper.currentYear();
-
-        ReflectionModel? currentYearReflection;
-        try {
-          currentYearReflection = reflections.firstWhere(
-            (r) => r.year == currentYear,
+      // Load from cache first
+      final cachedReflections = await _cacheService.getCachedReflections(
+        user.uid,
+      );
+      if (cachedReflections.isNotEmpty) {
+        setState(() {
+          _currentYearReflection = cachedReflections.firstWhere(
+            (r) => r.year == DateHelper.currentYear(),
+            orElse: () => cachedReflections.first,
           );
-        } catch (e) {
-          currentYearReflection = null;
-        }
+          _isLoading = false;
+        });
+      }
 
-        // Filter past year reflections
-        final pastReflections = reflections
-            .where((r) => r.year < currentYear)
-            .toList();
+      // Fetch fresh data from Firestore
+      final currentYear = DateHelper.currentYear();
+      final currentReflection = await _reflectionService
+          .getUserReflectionForYear(user.uid, currentYear);
+
+      setState(() {
+        _currentYearReflection = currentReflection;
+        _isLoading = false;
+      });
+
+      // Listen to real-time updates and cache them
+      _reflectionService.getUserReflections(user.uid).listen((reflections) {
+        // Cache the reflections
+        _cacheService.cacheUserReflections(user.uid, reflections);
 
         setState(() {
-          _currentYearReflection = currentYearReflection;
-          _pastReflections = pastReflections;
+          _pastReflections = reflections
+              .where((r) => r.year < DateHelper.currentYear())
+              .toList();
         });
       });
     } catch (e) {
       print('Error loading reflections: $e');
+      setState(() => _isLoading = false);
     }
   }
 

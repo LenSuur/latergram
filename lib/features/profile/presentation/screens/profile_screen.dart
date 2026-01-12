@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../main.dart';
 import '../../../../shared/services/auth_service.dart';
+import '../../../../shared/services/cache_service.dart';
 import '../../../../shared/widgets/main_app_bar.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -14,6 +15,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = AuthService();
+  final CacheService _cacheService = CacheService();
 
   String _userName = '';
   String _userEmail = '';
@@ -28,13 +30,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadUserData() async {
     final user = _authService.currentUser;
     if (user == null) {
-      // Not logged in - shouldn't happen
       if (mounted) context.go('/login');
       return;
     }
 
     try {
-      // Get user data from Firestore
+      // Load from cache first
+      final cachedProfile = await _cacheService.getCachedUserProfile();
+      if (cachedProfile.isNotEmpty) {
+        setState(() {
+          _userName = cachedProfile['name']!;
+          _userEmail = cachedProfile['email']!;
+          _isLoading = false;
+        });
+      }
+
+      // Fetch fresh data from Firestore
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -42,6 +53,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       final userName = userDoc.data()?['name'] ?? 'Unknown';
       final userEmail = user.email ?? 'No email';
+
+      // Cache the fresh data
+      await _cacheService.cacheUserProfile(userName, userEmail);
 
       setState(() {
         _userName = userName;
@@ -88,6 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (shouldSignOut == true) {
+      await _cacheService.clearCache();
       await _authService.signOut();
       if (mounted) {
         context.go('/login');
