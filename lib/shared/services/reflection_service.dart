@@ -53,4 +53,21 @@ class ReflectionService {
       throw 'Viga postituse salvestamisel: $e';
     }
   }
+
+  Future<List<ReflectionModel>> getAllUserReflections(String userId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('reflections')
+          .where('userId', isEqualTo: userId)
+          .orderBy('year', descending: false) // Ascending: 2021 -> 2025
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => ReflectionModel.fromJson(doc.data()))
+          .toList();
+    } catch (e) {
+      print('Error getting all reflections: $e');
+      return [];
+    }
+  }
 }

@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latergram/features/reflection/presentation/screens/timeline_screen.dart';
+import '../../../../shared/services/reflection_service.dart';
 import '../../data/models/reflection_model.dart';
 import 'fullscreen_photo.dart';
 
-class ReflectionDetailScreen extends StatelessWidget {
+class ReflectionDetailScreen extends StatefulWidget {
   final ReflectionModel reflection;
 
   const ReflectionDetailScreen({super.key, required this.reflection});
 
   @override
+  State<ReflectionDetailScreen> createState() => _ReflectionDetailScreenState();
+}
+
+class _ReflectionDetailScreenState extends State<ReflectionDetailScreen> {
+  final ReflectionService _reflectionService = ReflectionService();
+
+  @override
   Widget build(BuildContext context) {
+    final reflection = widget.reflection;
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -115,9 +125,52 @@ class ReflectionDetailScreen extends StatelessWidget {
 
                   Center(
                     child: OutlinedButton.icon(
-                      onPressed: () {
-                        print('Timeline button - coming in Phase 2');
-                        // TODO: Open timeline carousel
+                      onPressed: () async {
+                        // Capture context BEFORE any async operations
+                        final navigator = Navigator.of(context);
+                        final messenger = ScaffoldMessenger.of(context);
+                        final theme = Theme.of(context);
+
+                        // Show loading
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (dialogContext) => Center(
+                            child: CircularProgressIndicator(
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        );
+
+                        // Fetch all reflections for this user
+                        final allReflections = await _reflectionService
+                            .getAllUserReflections(widget.reflection.userId);
+
+                        // Close loading - use captured navigator
+                        navigator.pop();
+
+                        if (allReflections.isEmpty) {
+                          // No reflections found
+                          messenger.showSnackBar(
+                            SnackBar(content: Text('No reflections found')),
+                          );
+                          return;
+                        }
+
+                        // Find index of current reflection
+                        final currentIndex = allReflections.indexWhere(
+                              (r) => r.year == widget.reflection.year,
+                        );
+
+                        // Open timeline - use captured navigator
+                        navigator.push(
+                          MaterialPageRoute(
+                            builder: (context) => TimelineScreen(
+                              reflections: allReflections,
+                              initialIndex: currentIndex >= 0 ? currentIndex : 0,
+                            ),
+                          ),
+                        );
                       },
                       icon: Icon(Icons.timeline),
                       label: Text('View Timeline'),
