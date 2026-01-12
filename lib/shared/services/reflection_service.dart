@@ -70,4 +70,26 @@ class ReflectionService {
       return [];
     }
   }
+
+  Stream<Map<int, List<ReflectionModel>>> getAllReflectionsGroupedByYear() {
+    return _firestore
+        .collection('reflections')
+        .orderBy('year', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      final reflections = snapshot.docs
+          .map((doc) => ReflectionModel.fromJson(doc.data()))
+          .toList();
+
+      final Map<int, List<ReflectionModel>> grouped = {};
+      for (var reflection in reflections) {
+        if (!grouped.containsKey(reflection.year)) {
+          grouped[reflection.year] = [];
+        }
+        grouped[reflection.year]!.add(reflection);
+      }
+
+      return grouped;
+    });
+  }
 }

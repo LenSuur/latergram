@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
+import '../../features/gallery/presentation/screens/gallery_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/reflection/data/models/reflection_model.dart';
 import '../../features/reflection/presentation/screens/draft_reflection_screen.dart';
@@ -36,26 +37,11 @@ class AppRouter {
         name: 'home',
         builder: (context, state) => const HomeScreen(),
       ),
+
       GoRoute(
         path: '/gallery',
         name: 'gallery',
-        builder: (context, state) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: Colors.black,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => context.go('/home'),
-            ),
-            title: Text('Gallery', style: TextStyle(color: Colors.white)),
-          ),
-          body: Center(
-            child: Text(
-              'Gallery - Coming Soon',
-              style: TextStyle(color: Colors.white, fontSize: 24),
-            ),
-          ),
-        ),
+        builder: (context, state) => const GalleryScreen(),
       ),
 
       GoRoute(

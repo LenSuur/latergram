@@ -5,6 +5,7 @@ import 'package:latergram/shared/services/auth_service.dart';
 import 'package:latergram/shared/services/reflection_service.dart';
 
 import '../../../../core/utils/date_helper.dart';
+import '../../../../shared/widgets/main_app_bar.dart';
 import '../../../reflection/data/models/reflection_model.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -251,65 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        automaticallyImplyLeading: false,
-        toolbarHeight: 56,
-        flexibleSpace: SafeArea(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              // Home - clickable image
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    // Already on home
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(8),
-                    child: Image.asset(
-                      'assets/images/icon_home.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-
-              // Gallery - clickable image WITH NAVIGATION
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    context.go('/gallery');
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(8),
-                    child: Image.asset(
-                      'assets/images/icon_gallery.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-
-              // Profile - clickable image WITH NAVIGATION
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    context.go('/profile');
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(8),
-                    child: Image.asset(
-                      'assets/images/icon_profile.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      appBar: MainAppBar(currentRoute: '/home'),
       body: _isLoading
           ? Center(
               child: CircularProgressIndicator(
