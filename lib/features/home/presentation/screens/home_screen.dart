@@ -28,9 +28,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    print('========================================');
-    print('YOUR USER ID: ${_authService.currentUser?.uid}');
-    print('========================================');
     _loadReflections();
   }
 
@@ -75,7 +72,6 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       });
     } catch (e) {
-      print('Error loading reflections: $e');
       setState(() => _isLoading = false);
     }
   }
