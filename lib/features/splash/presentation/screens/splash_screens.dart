@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latergram/shared/services/auth_service.dart';
-
-import '../../../../core/constants/app_constants.dart';
+import '../../../../main.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,7 +12,6 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   final AuthService _authService = AuthService();
-  String _version = '';
 
   @override
   void initState() {
@@ -55,10 +53,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
           Padding(
             padding: const EdgeInsets.only(bottom: 32.0),
-            child: Text(
-              'v${AppConstants.appVersion}',
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
+            child: Text('v$appVersion'),
           ),
         ],
       ),

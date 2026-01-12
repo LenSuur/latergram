@@ -4,9 +4,15 @@ import 'package:latergram/core/router/app_router.dart';
 import 'package:latergram/core/theme/app_theme.dart';
 import 'package:latergram/firebase_options.dart';
 import 'core/constants/app_constants.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
+late final String appVersion;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  final packageInfo = await PackageInfo.fromPlatform();
+  appVersion = packageInfo.version;
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,

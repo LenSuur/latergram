@@ -59,7 +59,7 @@ class ReflectionService {
       final querySnapshot = await _firestore
           .collection('reflections')
           .where('userId', isEqualTo: userId)
-          .orderBy('year', descending: false) // Ascending: 2021 -> 2025
+          .orderBy('year', descending: false)
           .get();
 
       return querySnapshot.docs
