@@ -5,6 +5,7 @@ import 'package:latergram/shared/services/auth_service.dart';
 import 'package:latergram/shared/services/reflection_service.dart';
 
 import '../../../../core/utils/date_helper.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../shared/services/cache_service.dart';
 import '../../../../shared/widgets/main_app_bar.dart';
 import '../../../reflection/data/models/reflection_model.dart';
@@ -72,6 +73,13 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       });
     } catch (e) {
+      if (mounted) {
+        ErrorHandler.showError(
+          context,
+          'Failed to load reflections. Please check your connection.',
+          onRetry: _loadReflections,
+        );
+      }
       setState(() => _isLoading = false);
     }
   }
