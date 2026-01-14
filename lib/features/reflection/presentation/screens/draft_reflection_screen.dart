@@ -11,7 +11,7 @@ import '../../../../shared/services/storage_service.dart';
 import '../../data/models/reflection_model.dart';
 
 class DraftReflectionScreen extends StatefulWidget {
-  final String? photoPath; // Photo from home screen camera (optional)
+  final String? photoPath;
   final ReflectionModel? existingReflection;
 
   const DraftReflectionScreen({
@@ -34,6 +34,27 @@ class _DraftReflectionScreenState extends State<DraftReflectionScreen> {
   File? _selectedImage;
   bool _isLoading = false;
   bool _isEditMode = false;
+  String? _existingReflectionId;
+
+  Future<void> _loadExistingReflection() async {
+    final user = _authService.currentUser;
+    if (user == null) return;
+
+    final currentYear = DateHelper.currentYear();
+    final existing = await _reflectionService.getUserReflectionForYear(
+      user.uid,
+      currentYear,
+    );
+
+    if (existing != null && mounted) {
+      setState(() {
+        _existingReflectionId = existing.id;
+        if (_messageController.text.isEmpty) {
+          _messageController.text = existing.reflectionText;
+        }
+      });
+    }
+  }
 
   Future<void> _takePhoto() async {
     try {
@@ -114,7 +135,7 @@ class _DraftReflectionScreenState extends State<DraftReflectionScreen> {
       final userName = userDoc.data()?['name'] ?? 'Unknown';
 
       final reflection = ReflectionModel(
-        id: widget.existingReflection?.id ?? Uuid().v4(),
+        id: widget.existingReflection?.id ?? _existingReflectionId ?? Uuid().v4(),
         userId: user.uid,
         userName: userName,
         year: currentYear,
@@ -158,7 +179,10 @@ class _DraftReflectionScreenState extends State<DraftReflectionScreen> {
 
     if (widget.existingReflection != null) {
       _messageController.text = widget.existingReflection!.reflectionText;
+      _existingReflectionId = widget.existingReflection!.id;
       _isEditMode = true;
+    } else {
+      _loadExistingReflection();
     }
     if (widget.photoPath != null) {
       _selectedImage = File(widget.photoPath!);
