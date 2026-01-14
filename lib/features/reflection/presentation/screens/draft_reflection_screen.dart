@@ -50,7 +50,6 @@ class _DraftReflectionScreenState extends State<DraftReflectionScreen> {
         });
       }
     } catch (e) {
-      print('Error taking photo: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -91,8 +90,6 @@ class _DraftReflectionScreenState extends State<DraftReflectionScreen> {
 
       final currentYear = DateHelper.currentYear();
 
-      print('🚀 Starting upload for user: ${user.uid}, year: $currentYear');
-
       String photoUrl;
       if (_selectedImage != null) {
         // New photo upload
@@ -101,11 +98,9 @@ class _DraftReflectionScreenState extends State<DraftReflectionScreen> {
           userId: user.uid,
           year: currentYear,
         );
-        print('✅ New photo uploaded! URL: $photoUrl');
       } else if (widget.existingReflection != null) {
         // Editing - keep existing photo URL
         photoUrl = widget.existingReflection!.photoUrl;
-        print('📸 Using existing photo URL');
       } else {
         throw 'No photo available';
       }
@@ -142,7 +137,6 @@ class _DraftReflectionScreenState extends State<DraftReflectionScreen> {
         context.go('/home');
       }
     } catch (e) {
-      print('Error saving: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -17,9 +17,8 @@ class CacheService {
       final jsonList = reflections.map((r) => r.toJson()).toList();
       final jsonString = jsonEncode(jsonList);
       await prefs.setString('$_userReflectionsKey$userId', jsonString);
-      print('💾 Cached ${reflections.length} reflections for user $userId');
     } catch (e) {
-      print('❌ Error caching reflections: $e');
+      // Silently fail - caching is non-critical
     }
   }
 
@@ -30,7 +29,6 @@ class CacheService {
       final jsonString = prefs.getString('$_userReflectionsKey$userId');
 
       if (jsonString == null) {
-        print('💾 No cached reflections found');
         return [];
       }
 
@@ -39,10 +37,8 @@ class CacheService {
           .map((json) => ReflectionModel.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      print('💾 Loaded ${reflections.length} cached reflections');
       return reflections;
     } catch (e) {
-      print('❌ Error loading cached reflections: $e');
       return [];
     }
   }
@@ -53,9 +49,8 @@ class CacheService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_userNameKey, name);
       await prefs.setString(_userEmailKey, email);
-      print('💾 Cached user profile');
     } catch (e) {
-      print('❌ Error caching profile: $e');
+      // Silently fail - caching is non-critical
     }
   }
 
@@ -67,14 +62,11 @@ class CacheService {
       final email = prefs.getString(_userEmailKey) ?? '';
 
       if (name.isEmpty && email.isEmpty) {
-        print('💾 No cached profile found');
         return {};
       }
 
-      print('💾 Loaded cached profile');
       return {'name': name, 'email': email};
     } catch (e) {
-      print('❌ Error loading cached profile: $e');
       return {};
     }
   }
@@ -84,9 +76,8 @@ class CacheService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
-      print('💾 Cache cleared');
     } catch (e) {
-      print('❌ Error clearing cache: $e');
+      // Silently fail - cache clear is non-critical
     }
   }
 }

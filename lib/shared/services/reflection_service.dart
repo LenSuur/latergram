@@ -23,7 +23,6 @@ class ReflectionService {
 
       return ReflectionModel.fromJson(querySnapshot.docs.first.data());
     } catch (e) {
-      print('Error getting reflection: $e');
       return null;
     }
   }
@@ -66,7 +65,6 @@ class ReflectionService {
           .map((doc) => ReflectionModel.fromJson(doc.data()))
           .toList();
     } catch (e) {
-      print('Error getting all reflections: $e');
       return [];
     }
   }

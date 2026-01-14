@@ -44,9 +44,6 @@ class _SignupScreenState extends State<SignupScreen> {
         name: _nameController.text.trim(),
       );
 
-      print('Signup successful!');
-      print('Name: ${_nameController.text}');
-
       if (mounted) {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
