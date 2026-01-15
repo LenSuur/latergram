@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/services/reflection_service.dart';
 import '../../data/models/reflection_model.dart';
 
 class TimelineScreen extends StatefulWidget {
-  final List<ReflectionModel> reflections;
-  final int initialIndex;
+  final String userId;
+  final int initialYear;
 
   const TimelineScreen({
     super.key,
-    required this.reflections,
-    required this.initialIndex,
+    required this.userId,
+    required this.initialYear,
   });
 
   @override
@@ -16,14 +17,44 @@ class TimelineScreen extends StatefulWidget {
 }
 
 class _TimelineScreenState extends State<TimelineScreen> {
+  final ReflectionService _reflectionService = ReflectionService();
+
   late PageController _pageController;
-  late int _currentPage;
+  int _currentPage = 0;
+  List<ReflectionModel> _reflections = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _currentPage = widget.initialIndex;
-    _pageController = PageController(initialPage: widget.initialIndex);
+    _pageController = PageController();
+    _loadReflections();
+  }
+
+  Future<void> _loadReflections() async {
+    final reflections = await _reflectionService.getAllUserReflections(widget.userId);
+
+    if (mounted) {
+      // Find index of initial year
+      final initialIndex = reflections.indexWhere(
+        (r) => r.year == widget.initialYear,
+      );
+
+      setState(() {
+        _reflections = reflections;
+        _currentPage = initialIndex >= 0 ? initialIndex : 0;
+        _isLoading = false;
+      });
+
+      // Jump to initial page after build
+      if (reflections.isNotEmpty && initialIndex >= 0) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_pageController.hasClients) {
+            _pageController.jumpToPage(initialIndex);
+          }
+        });
+      }
+    }
   }
 
   @override
@@ -34,20 +65,53 @@ class _TimelineScreenState extends State<TimelineScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+      );
+    }
+
+    if (_reflections.isEmpty) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'No reflections found',
+                style: TextStyle(color: Colors.white),
+              ),
+              SizedBox(height: 16),
+              IconButton(
+                icon: Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: Stack(
         children: [
           // PageView for swiping
           PageView.builder(
             controller: _pageController,
-            itemCount: widget.reflections.length,
+            itemCount: _reflections.length,
             onPageChanged: (index) {
               setState(() {
                 _currentPage = index;
               });
             },
             itemBuilder: (context, index) {
-              final reflection = widget.reflections[index];
+              final reflection = _reflections[index];
               return _buildTimelinePage(reflection);
             },
           ),
@@ -87,7 +151,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        '${widget.reflections[_currentPage].year}',
+                        '${_reflections[_currentPage].year}',
                         style: TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.bold,
@@ -125,7 +189,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
-                    widget.reflections.length,
+                    _reflections.length,
                         (index) => _buildDotIndicator(index),
                   ),
                 ),
@@ -140,7 +204,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
   Widget _buildTimelinePage(ReflectionModel reflection) {
     return Column(
       children: [
-        // Photo (takes most space)
+        // Photo
         Expanded(
           flex: 3,
           child: Container(

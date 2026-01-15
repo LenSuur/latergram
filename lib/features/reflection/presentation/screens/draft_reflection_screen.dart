@@ -135,7 +135,7 @@ class _DraftReflectionScreenState extends State<DraftReflectionScreen> {
       final userName = userDoc.data()?['name'] ?? 'Unknown';
 
       final reflection = ReflectionModel(
-        id: widget.existingReflection?.id ?? _existingReflectionId ?? Uuid().v4(),
+        id: '${user.uid}_$currentYear',
         userId: user.uid,
         userName: userName,
         year: currentYear,
